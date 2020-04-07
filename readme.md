@@ -1,0 +1,1 @@
+My attempt to migrate a simplified version of [hardmaru](https://github.com/hardmaru/write-rnn-tensorflow)'s RNN Handwriting Generation [(Graves 2013)](https://arxiv.org/abs/1308.0850) implementation to TensorFlow v2.

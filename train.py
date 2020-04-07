@@ -16,8 +16,8 @@ data_path = "~/projects/descript-research-test/data/"
 def main():
 
 	parser = argparse.ArgumentParser()
-	parser.add_argument('--rnn_size', type=int, default=256, help='size of RNN hidden state')
-	parser.add_argument('--num_layers', type=int, default=2, help='number of layers in the RNN')
+	parser.add_argument('--rnn_size', type=int, default=400, help='size of RNN hidden state')
+	parser.add_argument('--num_layers', type=int, default=1, help='number of layers in the RNN')
 	parser.add_argument('--model', type=str, default='lstm', help='rnn, gru, or lstm')
 	parser.add_argument('--batch_size', type=int, default=50, help='minibatch size')
 	parser.add_argument('--seq_length', type=int, default=300, help='RNN sequence length')
@@ -41,7 +41,7 @@ def train(args):
 	data = DataLoader(args.batch_size, args.seq_length, args.data_scale)
 
 	# Instantiate model
-	# model = Model(args)
+	model = Model(args)
 
 	# with tf.Session() as session:
 

@@ -11,34 +11,38 @@ class Model():
             args.seq_length = 1
 
         if args.model == 'rnn':
-            cell_fn = tf.contrib.rnn.BasicRNNCell
+            cell_fn = tf.keras.layers.SimpleRNNCell
         elif args.model == 'gru':
-            cell_fn = tf.contrib.rnn.GRUCell
+            cell_fn = tf.keras.layers.GRUCell
         elif args.model == 'lstm':
-            cell_fn = tf.contrib.rnn.BasicLSTMCell
+            cell_fn = tf.keras.layers.LSTMCell
         else:
             raise Exception("model type not supported: {}".format(args.model))
 
         def get_cell():
-            return cell_fn(args.rnn_size, state_is_tuple=False)
+            return cell_fn(args.rnn_size)
 
-        cell = tf.contrib.rnn.MultiRNNCell(
+        cell = tf.keras.layers.StackedRNNCells(
             [get_cell() for _ in range(args.num_layers)])
 
         if (infer == False and args.keep_prob < 1):  # training mode
-            cell = tf.contrib.rnn.DropoutWrapper(
+            cell = tf.nn.RNNCellDropoutWrapper(
                 cell, output_keep_prob=args.keep_prob)
 
         self.cell = cell
 
-        self.input_data = tf.placeholder(
+        self.input_data = tf.keras.backend.placeholder(
             dtype=tf.float32, shape=[
                 None, args.seq_length, 3], name='data_in')
-        self.target_data = tf.placeholder(
+        self.target_data = tf.keras.backend.placeholder(
             dtype=tf.float32, shape=[
                 None, args.seq_length, 3], name='targets')
-        zero_state = cell.zero_state(
+
+        # zero_state = cell.zero_state(
+        #     batch_size=args.batch_size, dtype=tf.float32)
+        zero_state = cell.get_initial_state(
             batch_size=args.batch_size, dtype=tf.float32)
+
         self.state_in = tf.identity(zero_state, name='state_in')
 
         self.num_mixture = args.num_mixture
@@ -53,6 +57,8 @@ class Model():
         # inputs = [tf.squeeze(input_, [1]) for input_ in inputs]
         inputs = tf.unstack(self.input_data, axis=1)
 
+        # #### Doing some legacy data-shaping or something
+
         # outputs, state_out = tf.contrib.legacy_seq2seq.rnn_decoder(inputs, self.state_in, cell, loop_function=None, scope='rnnlm')
         outputs, state_out = tf.contrib.legacy_seq2seq.rnn_decoder(
             inputs, zero_state, cell, loop_function=None, scope='rnnlm')
@@ -60,6 +66,9 @@ class Model():
         output = tf.reshape(
             tf.concat(axis=1, values=outputs), [-1, args.rnn_size])
         output = tf.nn.xw_plus_b(output, output_w, output_b)
+
+        # #### 
+
         self.state_out = tf.identity(state_out, name='state_out')
 
         # reshape target data so that it is compatible with prediction shape
